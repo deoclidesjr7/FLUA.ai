@@ -1,7 +1,6 @@
 services:
   - type: web
     name: flua-bot
-    runtime: python
+    env: docker
     plan: free
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn flua_telegram:app --host 0.0.0.0 --port $PORT
+    dockerfilePath: ./Dockerfile
