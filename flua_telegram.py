@@ -69,21 +69,27 @@ async def telegram_webhook(request: Request):
 # Define a rota do webhook
 routes = [Route(f"/{TELEGRAM_TOKEN}", telegram_webhook, methods=["POST"])]
 
-# Cria o app
-app = Starlette(routes=routes)
+# --- FUNÇÃO DE CICLO DE VIDA (NOVO MÉTODO DO STARLETTE) ---
+from contextlib import asynccontextmanager
 
-# Evento que roda quando o app inicia no Render
-@app.on_event("startup")
-async def on_startup():
-    # Define o webhook no Telegram para apontar para a URL do Render
+@asynccontextmanager
+async def lifespan(app):
+    # --- TUDO AQUI RODA QUANDO A APLICAÇÃO INICIA ---
+    print("Iniciando a Flua...")
+    await application.initialize()
     await application.bot.set_webhook(url=f"{RENDER_EXTERNAL_URL}/{TELEGRAM_TOKEN}")
     print(f"Webhook definido para {RENDER_EXTERNAL_URL}/{TELEGRAM_TOKEN}")
-
-# Evento que roda quando o app para
-@app.on_event("shutdown")
-async def on_shutdown():
+    
+    # O comando 'yield' separa o que roda no início do que roda no fim
+    yield
+    
+    # --- TUDO AQUI RODA QUANDO A APLICAÇÃO PARA ---
+    print("Parando a Flua...")
     await application.bot.delete_webhook()
     await application.shutdown()
+
+# Cria o app, passando o novo 'lifespan' para ele
+app = Starlette(routes=routes, lifespan=lifespan)
 
 if __name__ == '__main__':
     # Modo local (polling) - apenas para testes no seu PC
