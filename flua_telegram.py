@@ -149,7 +149,23 @@ async def processar_mensagem(update: Update, user_id: str, user_message: str):
 
         # Se a Flua decidiu usar a busca na internet
         if msg.tool_calls:
-            historico.append(msg)  # registra a decisão dela no histórico
+            # CORREÇÃO: em vez de guardar o objeto 'msg' direto (que não pode ser
+            # convertido para JSON ao salvar a memória), guardamos um dicionário
+            # com exatamente os mesmos dados.
+            historico.append({
+                "role": "assistant",
+                "content": msg.content,
+                "tool_calls": [
+                    {
+                        "id": tc.id,
+                        "type": "function",
+                        "function": {
+                            "name": tc.function.name,
+                            "arguments": tc.function.arguments
+                        }
+                    } for tc in msg.tool_calls
+                ]
+            })
             print(f"[Flua] Usando busca na internet")
 
             for tool_call in msg.tool_calls:
